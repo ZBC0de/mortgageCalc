@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
+  <meta charset="UTF-8">
+  <script src = ./modules/jquery.js></script>
+  <script src="./modules/chart.js"></script>
+  <script src="./modules/vue.js"></script>
+  <script src="./modules/socket.io.js"></script>
+  <script src="./modules/moment.js"></script>
+  <script src="./modules/md5.js"></script>
+  <script src="./modules/simple-copy.js"></script>
+
+  <title>Vue Template</title>
+
+  <style>
+
+    body{padding: 0; margin:0;}
+    *{font-family: monospace;}
+    .convert{position: relative; width: 98vw; height: 98vh; left: 1vw; top: 1vh; background-color: #424242; border-radius: 10px;}
+    .inpCont{position: relative; width: 48%; top: 50px; margin-bottom: 10px; margin-right: 5px; float: left; background-color: #2d2d2d; border-radius: 5px; left: 2.5%;}
+    .inp{position: relative; width: 70%; left: 2.5%; height: 10px;}
+    .inpLabel{position: relative; left: 2.5%; font-size: 15px; color: white;}
+    #calcBtn{position: relative;width: 200px;height: 40px;border: 1px transparent; border-radius: 10px; color: white;background-color: #81ff81;}
+    #calcBtn:hover{background-color: #68cc68; cursor: pointer; height: 41px; width: 201px;}
+    #moPay{position: relative; color: white;}
+    #operateCont{position: relative; left: 2.5%; width: fit-content;}
+  </style>
+
+</head>
+
+<body>
+
+<div id = vueApp>
+
+  <mortgage></mortgage>
+
+</div>
+
+
+<script>
+
+  let webSocket = io.connect(location.host);
+  let msg
+
+  Vue.component('mortgage', {
+    /* Component */
+    template: `
+                  <div class = convert>
+                    <div id="container" style="position: relative; height: 200px;">
+                      <h1 style="position: relative; left: 2.5%; top: 25px; color: white;">Mortgage Calculator</h1>
+                      <div class="inpCont" v-for="item in this.inputs">
+                        <input class="inp" v-model="item.amt" type="range" :min="item.min" :max="item.max">
+                        <label class="inpLabel">{{item.name}}: {{item.amt}}{{item.unit}}</label>
+                      </div>
+                    </div>
+                    <div id="operateCont">
+                      <button id="calcBtn" @click="calcMortgage">Calculate Payment</button>
+                      <h2 id="moPay">{{this.moPay}} /Month$</h2>
+                    </div>
+                  </div>
+                    `,
+    data() {
+      return {
+        inputs: [
+          {name: 'Purchase Price', amt: 100000, min: 30000, max: 1000000, unit: '$'},
+          {name: 'Down Payment', amt: 50000, min: 0, max: 500000, unit: '$'},
+          {name: 'Repay Time', amt: 5, min: 0, max: 50, unit: 'YRS'},
+          {name: 'Interest Rate', amt: 7, min: 0, max: 50, unit:'%'},
+        ],
+        moPay: 0,
+
+      }
+    },
+    methods: { // all methods for components go here
+      calcMortgage(){
+        // Extract the loan amount and interest rate from inputs
+        let P = this.inputs[0].amt - this.inputs[1].amt;
+        let r = this.inputs[3].amt / 100;
+
+// Calculate the total number of months and convert the annual interest rate to a monthly rate
+        let n = this.inputs[2].amt * 12;
+        let monthlyInterestRate = r / 12;
+
+// Calculate the monthly payment using the formula for an amortizing loan
+        let numerator = monthlyInterestRate * Math.pow(1 + monthlyInterestRate, n);
+        let denominator = Math.pow(1 + monthlyInterestRate, n) - 1;
+        this.moPay = (P * (numerator / denominator)).toFixed(2);
+
+      }
+    },
+    computed: { // any function here is run when data is passed to component
+
+    },
+    mounted(){ // here is where things like event listeners go
+
+    }
+  })
+
+  let app = new Vue({
+    el: '#vueApp',
+    data() {
+      return {
+      }
+    },
+    methods: {
+
+    },
+    mounted() {
+
+    }
+  })
+
+  webSocket.on('html', function(data) {
+    try {
+      msg = JSON.parse(data);
+
+      switch (msg.type) {
+        case '':
+
+          break;
+        default:
+          break;
+      }
+    } catch (ex) {
+      console.log(ex.message);
+
+    }
+  })
+
+
+</script>
+</body>
+</html>
+
